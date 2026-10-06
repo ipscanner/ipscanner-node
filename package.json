@@ -1,0 +1,64 @@
+{
+  "name": "@ipscanner.io/sdk",
+  "version": "0.1.0",
+  "description": "Official Node.js and TypeScript client for the IPScanner API",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": "github:ipscanner/ipscanner-node",
+  "homepage": "https://ipscanner.io",
+  "keywords": [
+    "ipscanner",
+    "ip",
+    "vpn",
+    "proxy",
+    "geolocation",
+    "asn",
+    "agentscan"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "^6.4.1"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "packageManager": "pnpm@10.28.0"
+}
