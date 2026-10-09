@@ -13,6 +13,28 @@ describe('errors', () => {
     await expect(suspended.client.account.usage()).rejects.toBeInstanceOf(AuthenticationError);
   });
 
+  it('maps gate.verify errors to the normal error model', async () => {
+    const { client } = mockClient([
+      json(401, { success: false, error: 'invalid_secret', message: "The secret does not match this token's site" }),
+    ]);
+    const err = await client.gate.verify({ secret: 'gs_wrong', token: 't' }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(AuthenticationError);
+    expect(err).toMatchObject({ status: 401, code: 'invalid_secret' });
+
+    const used = mockClient([json(400, { success: false, error: 'already_used', message: 'This token was already verified' })]);
+    const usedErr = await used.client.gate.verify({ secret: 'gs_x', token: 't' }).catch((e: unknown) => e);
+    expect(usedErr).toBeInstanceOf(APIError);
+    expect(usedErr).not.toBeInstanceOf(AuthenticationError);
+    expect(usedErr).toMatchObject({ status: 400, code: 'already_used', message: 'This token was already verified' });
+  });
+
+  it('maps an unknown site policy to NotFoundError', async () => {
+    const { client } = mockClient([json(404, { error: 'unknown_site', message: 'No site with this id on this account' })]);
+    const err = await client.sites.policy('site_nope').catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(NotFoundError);
+    expect(err).toMatchObject({ code: 'unknown_site' });
+  });
+
   it('maps 404 to NotFoundError', async () => {
     const { client } = mockClient([json(404, { error: 'not_found', message: 'No such ASN' })]);
     const err = await client.asnDirectory.get('AS99999999').catch((e: unknown) => e);

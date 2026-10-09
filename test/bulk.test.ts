@@ -81,6 +81,22 @@ describe('bulk.stream', () => {
     expect(done).toMatchObject({ complete: false, message: 'limit' });
   });
 
+  it('treats null premium fields on locked result lines as missing', async () => {
+    const { client } = mockClient([
+      ndjson([
+        '{"type":"meta","total":2,"metered":2,"planRequired":"Starter"}\n',
+        '{"type":"result","input":"185.65.135.1","ip":"185.65.135.1","classification":"vpn","score":null,"grade":null,"verdict":null,"vpnProvider":null,"locked":["score","grade","verdict","vpnProvider"]}\n',
+        '{"type":"result","index":1,"ip":"185.65.135.2","classification":"vpn","vpnProvider":"Mullvad","score":20,"grade":"C","verdict":"dirty"}\n',
+        '{"type":"done","reason":"complete","processed":2,"total":2}\n',
+      ]),
+    ]);
+    const [meta, locked, paid] = await collect(client.bulk.stream({ ips: ['185.65.135.1', '185.65.135.2'] }));
+    expect(meta).toMatchObject({ type: 'meta', planRequired: 'Starter', locked: [] });
+    expect(locked).toMatchObject({ score: 0, grade: '', verdict: '', vpnProvider: '', planRequired: '' });
+    expect(locked!.locked).toEqual(['score', 'grade', 'verdict', 'vpnProvider']);
+    expect(paid).toMatchObject({ vpnProvider: 'Mullvad', score: 20, grade: 'C', verdict: 'dirty', locked: [] });
+  });
+
   it('throws pre-stream errors as normal API errors', async () => {
     const { client } = mockClient([
       json(429, { error: 'rate_limit_exceeded', reason: 'monthly_quota', message: 'Out', retryAfter: 10 }),

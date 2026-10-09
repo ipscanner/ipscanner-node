@@ -95,6 +95,7 @@ export function toBulkEvent(line: string): BulkEvent {
     classification: s('classification'),
     confidence: n('confidence'),
     anonymized: b('anonymized'),
+    vpnProvider: s('vpnProvider'),
     score: n('score'),
     grade: s('grade'),
     isTorExit: b('isTorExit'),
@@ -105,6 +106,8 @@ export function toBulkEvent(line: string): BulkEvent {
     processed: n('processed'),
     failed: n('failed'),
     metered: n('metered'),
+    planRequired: s('planRequired'),
+    locked: Array.isArray(raw.locked) ? raw.locked.filter((v): v is string => typeof v === 'string') : [],
     complete: false,
   };
   if (event.type === 'done') {

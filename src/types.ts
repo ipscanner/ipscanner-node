@@ -13,39 +13,56 @@ export type NetworkClass =
   | 'vpn'
   | 'residential_proxy'
   | 'tor'
+  | 'relay'
   | 'unknown';
 
-export interface VpnResponse {
+/** Set when the caller's plan sent premium fields as null. */
+export interface PremiumMarkers {
+  /** Dotted paths of the fields sent as null, e.g. "provider" or "geo.latitude". */
+  locked?: string[];
+  /** The plan that includes them. */
+  planRequired?: string;
+}
+
+export interface VpnResponse extends PremiumMarkers {
   ip: string;
   isVpn: boolean;
   isTor: boolean;
   networkClass: NetworkClass;
   anonymized: boolean;
-  provider: string;
+  /** The network owner. */
+  provider: string | null;
+  /** The VPN brand, when known. */
+  vpnProvider: string | null;
   riskScore: number;
+  evidence?: string[];
 }
 
-export interface ProxyResponse {
+export interface ProxyResponse extends PremiumMarkers {
   ip: string;
   isProxy: boolean;
   isTor: boolean;
   networkClass: NetworkClass;
   anonymized: boolean;
-  provider: string;
+  /** The network owner. */
+  provider: string | null;
+  /** The VPN brand, when known. */
+  vpnProvider: string | null;
   riskScore: number;
+  evidence?: string[];
 }
 
-export interface GeolocationResponse {
+export interface GeolocationResponse extends PremiumMarkers {
   ip: string;
   country: string;
   countryCode: string;
   city: string;
   region: string;
-  postalCode: string;
-  latitude: number;
-  longitude: number;
+  postalCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
   timezone: string;
-  accuracyRadius: number;
+  accuracyRadius: number | null;
 }
 
 export interface AsnResponse {
@@ -65,6 +82,13 @@ export interface WhoisResponse {
   nameservers: string[];
   status: string[];
   privacyProtection: boolean;
+}
+
+export type WhoisStatus = 'ok' | 'not_found' | 'timeout' | 'unavailable' | 'unparsed';
+
+export interface WhoisResult extends WhoisResponse {
+  /** Anything but "ok" means the registry gave no usable answer and the fields are empty. */
+  whoisStatus: WhoisStatus;
 }
 
 export interface Deduction {
@@ -96,6 +120,7 @@ export interface Verdict {
   anonymized: boolean;
   confidence: number;
   method: string;
+  evidence?: string[];
 }
 
 export interface Purity {
@@ -105,21 +130,25 @@ export interface Purity {
   deductions: Deduction[];
 }
 
-export interface LookupResult {
+export interface LookupResult extends PremiumMarkers {
   target: LookupTarget;
   reserved: ReservedRange;
   verdict: Verdict;
-  purity: Purity;
+  purity: Purity | null;
   networkClass: NetworkClass;
   isVpn: boolean;
   isProxy: boolean;
   isTor: boolean;
-  provider?: string;
+  provider?: string | null;
+  vpnProvider: string | null;
   riskScore: number;
   networkType?: string;
   geo?: GeolocationResponse;
   asn?: AsnResponse;
+  /** Present only when whoisStatus is "ok". */
   whois?: WhoisResponse;
+  /** Set for hostname targets. */
+  whoisStatus?: WhoisStatus;
   degraded?: string[];
   at: string;
 }
@@ -179,12 +208,13 @@ export interface BulkResult {
   input: string;
   ip: string;
   port?: number;
-  score: number;
-  grade: Grade;
-  verdict: PurityVerdict;
+  score: number | null;
+  grade: Grade | null;
+  verdict: PurityVerdict | null;
   classification: string;
   confidence: number;
   anonymized: boolean;
+  vpnProvider: string | null;
   isTorExit: boolean;
   inVpnRange: boolean;
   inDatacenterRange: boolean;
@@ -192,7 +222,8 @@ export interface BulkResult {
   asnName?: string;
   asnType?: string;
   country?: string;
-  deductions: Deduction[];
+  deductions: Deduction[] | null;
+  locked?: string[];
 }
 
 export interface BulkCheckResponse {
@@ -202,6 +233,7 @@ export interface BulkCheckResponse {
   invalid: string[];
   summary: Record<string, number>;
   results: BulkResult[];
+  planRequired?: string;
 }
 
 export type BulkEventType = 'meta' | 'result' | 'error' | 'done';
@@ -219,6 +251,7 @@ export interface BulkEvent {
   classification: string;
   confidence: number;
   anonymized: boolean;
+  vpnProvider: string;
   score: number;
   grade: string;
   isTorExit: boolean;
@@ -229,6 +262,10 @@ export interface BulkEvent {
   processed: number;
   failed: number;
   metered: number;
+  /** Set on the meta event when result events have premium fields locked. */
+  planRequired: string;
+  /** Fields sent as null on this result event. */
+  locked: string[];
   /** True on a done event when every address was processed or failed. */
   complete: boolean;
 }
@@ -333,7 +370,7 @@ export interface AgentscanSelfParams {
   ja4?: string;
 }
 
-export interface AgentscanSelfResponse {
+export interface AgentscanSelfResponse extends PremiumMarkers {
   ip: string;
   userAgent: string;
   ja4: string;
@@ -346,6 +383,95 @@ export interface AgentscanSelfResponse {
   asOf: string;
   asn?: AsnResponse;
   geo?: GeolocationResponse;
+}
+
+export type TrafficClass =
+  | 'verified_bot'
+  | 'malicious_automation'
+  | 'ai_agent'
+  | 'tor'
+  | 'vpn'
+  | 'proxy'
+  | 'relay'
+  | 'hosting'
+  | 'human';
+
+export type SiteMode = 'monitor' | 'enforce';
+
+export interface EdgeCheckParams {
+  ip: string;
+  /** Site id, for attribution and the site's mode. */
+  site?: string;
+  userAgent?: string;
+  ja4?: string;
+  headers?: Record<string, string>;
+  headlessFlags?: Record<string, boolean>;
+  requestId?: string;
+}
+
+export interface EdgeNetwork {
+  networkClass: NetworkClass;
+  anonymized: boolean;
+  riskScore: number;
+  provider?: string | null;
+  vpnProvider: string | null;
+  evidence?: string[];
+  country?: string;
+  asn?: number;
+  asnName?: string;
+}
+
+export interface EdgeSite {
+  id: string;
+  mode: SiteMode;
+  policyVersion: number;
+}
+
+export interface EdgeCheckResponse extends PremiumMarkers {
+  class: TrafficClass;
+  /** Null when the Agentscan half did not answer in time. */
+  agent: AgentscanCheckResponse | null;
+  /** Null when the network half did not answer in time. */
+  network: EdgeNetwork | null;
+  /** Null when no site was given, or it is unknown or not on this account. */
+  site: EdgeSite | null;
+  degraded?: ('agent' | 'network')[];
+}
+
+export interface SitePolicyResponse {
+  site: string;
+  mode: SiteMode;
+  policy: Record<TrafficClass, AgentAction>;
+  version: number;
+  updatedAt: string;
+}
+
+export interface GateVerifyParams {
+  /** The site secret (gs_...). */
+  secret: string;
+  token: string;
+  /** The visitor's address as your server saw it; sets ip_match. */
+  remoteIp?: string;
+}
+
+export interface GateNetwork {
+  classification: NetworkClass;
+  anonymized: boolean;
+  provider: string | null;
+  vpn_provider: string | null;
+}
+
+export interface GateVerifyResponse extends PremiumMarkers {
+  success: true;
+  class: TrafficClass;
+  action: AgentAction;
+  mode: SiteMode;
+  confidence: number;
+  network: GateNetwork;
+  signals: string[];
+  hostname: string;
+  issued_at: string;
+  ip_match: boolean;
 }
 
 export type PolicyAction = 'allow' | 'step_up' | 'block';
@@ -442,8 +568,19 @@ export interface UsageWindow {
   resetAt: string;
 }
 
+export type AccountType =
+  | 'Free'
+  | 'Starter'
+  | 'Pro'
+  | 'Business'
+  | 'Enterprise'
+  | 'Founder'
+  | 'Admin'
+  | 'Sponsored'
+  | (string & {});
+
 export interface LimitsResponse {
-  accountType: string;
+  accountType: AccountType;
   limit: number;
   usage: number;
   remaining: number;
@@ -453,7 +590,7 @@ export interface LimitsResponse {
 }
 
 export interface UsageResponse {
-  plan: string;
+  plan: AccountType;
   used: number;
   limit: number;
   unlimited: boolean;

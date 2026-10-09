@@ -19,7 +19,7 @@ describe('client', () => {
     expect(call.url).toBe('https://api.test/v1/ip/lookup');
     expect(call.method).toBe('POST');
     expect(call.headers.get('authorization')).toBe('Bearer pk_test_123');
-    expect(call.headers.get('user-agent')).toBe('ipscanner-node/0.1.0');
+    expect(call.headers.get('user-agent')).toBe('ipscanner-node/0.2.0');
     expect(call.headers.get('content-type')).toBe('application/json');
     expect(call.headers.get('accept')).toBe('application/json');
     expect(call.body).toEqual({ target: '1.1.1.1' });

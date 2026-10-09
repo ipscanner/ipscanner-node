@@ -4,13 +4,16 @@ import { Agentscan } from './resources/agentscan';
 import { AsnDirectory } from './resources/asn-directory';
 import { Bulk } from './resources/bulk';
 import { Crawlers } from './resources/crawlers';
+import { Edge } from './resources/edge';
+import { Gate } from './resources/gate';
 import { IP } from './resources/ip';
 import { Provenance } from './resources/provenance';
+import { Sites } from './resources/sites';
 import type { RequestOptions } from './types';
 
 declare const process: { env?: Record<string, string | undefined> } | undefined;
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 export const DEFAULT_BASE_URL = 'https://ipscanner.io';
 export const DEFAULT_TIMEOUT = 30_000;
 export const DEFAULT_MAX_RETRIES = 2;
@@ -41,6 +44,8 @@ export interface APIRequest {
   options?: RequestOptions;
   accept?: string;
   timeout?: number;
+  /** Set to false to never send the API key. */
+  auth?: boolean;
 }
 
 /** @internal */
@@ -63,6 +68,9 @@ export class IPScanner {
   readonly account: Account;
   readonly asnDirectory: AsnDirectory;
   readonly crawlers: Crawlers;
+  readonly edge: Edge;
+  readonly sites: Sites;
+  readonly gate: Gate;
 
   private readonly fetchFn: FetchLike;
 
@@ -88,6 +96,9 @@ export class IPScanner {
     this.account = new Account(this);
     this.asnDirectory = new AsnDirectory(this);
     this.crawlers = new Crawlers(this);
+    this.edge = new Edge(this);
+    this.sites = new Sites(this);
+    this.gate = new Gate(this);
   }
 
   /** @internal */
@@ -120,7 +131,7 @@ export class IPScanner {
       Accept: req.accept ?? 'application/json',
       'User-Agent': `ipscanner-node/${VERSION}`,
     };
-    if (this.apiKey) headers.Authorization = `Bearer ${this.apiKey}`;
+    if (this.apiKey && req.auth !== false) headers.Authorization = `Bearer ${this.apiKey}`;
     let body: string | undefined;
     if (req.body !== undefined) {
       headers['Content-Type'] = 'application/json';

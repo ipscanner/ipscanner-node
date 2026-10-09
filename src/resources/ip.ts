@@ -9,7 +9,7 @@ import type {
   ProxyResponse,
   RequestOptions,
   VpnResponse,
-  WhoisResponse,
+  WhoisResult,
 } from '../types';
 
 export class IP {
@@ -36,7 +36,7 @@ export class IP {
     return this.client.request({ method: 'GET', path: `/v1/asn/${encodeURIComponent(ip)}`, options });
   }
 
-  whois(domain: string, options?: RequestOptions): Promise<WhoisResponse> {
+  whois(domain: string, options?: RequestOptions): Promise<WhoisResult> {
     return this.client.request({ method: 'GET', path: `/v1/whois/${encodeURIComponent(domain)}`, options });
   }
 
