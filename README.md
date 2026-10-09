@@ -18,7 +18,7 @@ import IPScanner from '@ipscanner.io/sdk';
 const client = new IPScanner({ apiKey: 'pk_live_...' });
 
 const result = await client.ip.lookup('1.1.1.1');
-console.log(result.networkClass, result.purity.grade);
+console.log(result.networkClass, result.vpnProvider, result.purity?.grade);
 ```
 
 CommonJS works too:
@@ -45,6 +45,8 @@ await client.ip.demo('8.8.8.8');            // keyless
 await client.ip.myip();                     // keyless
 ```
 
+`vpnProvider` is the VPN brand (for example `Mullvad`) when known, else `null`; `provider` is the network owner. On the Free plan, premium fields (`purity`, `provider`, `vpnProvider`, precise geo) are `null` and listed in `locked`, with `planRequired` naming the plan that includes them.
+
 ### Bulk
 
 ```ts
@@ -66,6 +68,28 @@ await client.agentscan.batch([{ line: 1, ip: '203.0.113.7', userAgent: 'GPTBot/1
 await client.agentscan.verify({ ip: '66.249.66.1', bot: 'googlebot' });
 await client.agentscan.allowlist();
 await client.agentscan.selfCheck();
+```
+
+### Edge
+
+```ts
+const visit = await client.edge.check({ ip: '203.0.113.7', site: 'site_...', userAgent: 'Mozilla/5.0 ...' });
+console.log(visit.class, visit.site?.mode);
+```
+
+### Sites
+
+```ts
+await client.sites.policy('site_...');
+```
+
+### Gate
+
+Server side, with the site secret. No API key is sent.
+
+```ts
+const gate = await client.gate.verify({ secret: 'gs_...', token, remoteIp: visitorIp });
+if (gate.action === 'block') reject();
 ```
 
 ### Provenance
