@@ -5,6 +5,7 @@ import { AsnDirectory } from './resources/asn-directory';
 import { Bulk } from './resources/bulk';
 import { Crawlers } from './resources/crawlers';
 import { Edge } from './resources/edge';
+import { Email } from './resources/email';
 import { Gate } from './resources/gate';
 import { IP } from './resources/ip';
 import { Provenance } from './resources/provenance';
@@ -13,7 +14,7 @@ import type { RequestOptions } from './types';
 
 declare const process: { env?: Record<string, string | undefined> } | undefined;
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 export const DEFAULT_BASE_URL = 'https://ipscanner.io';
 export const DEFAULT_TIMEOUT = 30_000;
 export const DEFAULT_MAX_RETRIES = 2;
@@ -71,6 +72,7 @@ export class IPScanner {
   readonly edge: Edge;
   readonly sites: Sites;
   readonly gate: Gate;
+  readonly email: Email;
 
   private readonly fetchFn: FetchLike;
 
@@ -99,6 +101,7 @@ export class IPScanner {
     this.edge = new Edge(this);
     this.sites = new Sites(this);
     this.gate = new Gate(this);
+    this.email = new Email(this);
   }
 
   /** @internal */

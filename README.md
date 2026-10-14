@@ -45,7 +45,16 @@ await client.ip.demo('8.8.8.8');            // keyless
 await client.ip.myip();                     // keyless
 ```
 
-`vpnProvider` is the VPN brand (for example `Mullvad`) when known, else `null`; `provider` is the network owner. On the Free plan, premium fields (`purity`, `provider`, `vpnProvider`, precise geo) are `null` and listed in `locked`, with `planRequired` naming the plan that includes them.
+`vpnProvider` is the VPN brand (for example `Mullvad`) when known, else `null`; `provider` is the network owner. On the Free plan, premium fields (`purity`, `provider`, `vpnProvider`, precise geo) are `null` and listed in `locked`, with `planRequired` naming the plan that includes them. `vpn` and `proxy` carry `purity` (the score breakdown) on paid plans; a locked answer has `deductionCount` instead.
+
+### Email
+
+```ts
+const res = await client.email.check('jane@outlok.com');
+// res.status 'risky', res.reason 'typo', res.suggestion 'jane@outlook.com'
+```
+
+Checks syntax, throwaway domains, whether the domain receives mail, typos of big webmail domains and role addresses. The mailbox itself is not probed. One request per address.
 
 ### Bulk
 
@@ -88,9 +97,11 @@ await client.sites.policy('site_...');
 Server side, with the site secret. No API key is sent.
 
 ```ts
-const gate = await client.gate.verify({ secret: 'gs_...', token, remoteIp: visitorIp });
+const gate = await client.gate.verify({ secret: 'gs_...', token, remoteIp: visitorIp, email });
 if (gate.action === 'block') reject();
 ```
+
+`email` is optional. With it, `gate.email` holds the check and its action (`gate.email.suggestion` is the "did you mean"), and `gate.action` is the stricter of the network and email actions.
 
 ### Provenance
 

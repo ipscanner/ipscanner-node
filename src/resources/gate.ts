@@ -9,7 +9,9 @@ export class Gate {
     return this.client.request({
       method: 'POST',
       path: '/v1/gate/verify',
-      body: { secret: params.secret, token: params.token, remote_ip: params.remoteIp },
+      body: {
+        secret: params.secret, token: params.token, remote_ip: params.remoteIp, email: params.email,
+      },
       auth: false,
       options,
     });

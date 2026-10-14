@@ -36,6 +36,10 @@ export interface VpnResponse extends PremiumMarkers {
   vpnProvider: string | null;
   riskScore: number;
   evidence?: string[];
+  /** The score breakdown; null when the plan locks it. */
+  purity?: Purity | null;
+  /** On a locked answer: how many reasons the withheld breakdown holds. */
+  deductionCount?: number;
 }
 
 export interface ProxyResponse extends PremiumMarkers {
@@ -50,6 +54,10 @@ export interface ProxyResponse extends PremiumMarkers {
   vpnProvider: string | null;
   riskScore: number;
   evidence?: string[];
+  /** The score breakdown; null when the plan locks it. */
+  purity?: Purity | null;
+  /** On a locked answer: how many reasons the withheld breakdown holds. */
+  deductionCount?: number;
 }
 
 export interface GeolocationResponse extends PremiumMarkers {
@@ -151,6 +159,8 @@ export interface LookupResult extends PremiumMarkers {
   whoisStatus?: WhoisStatus;
   degraded?: string[];
   at: string;
+  /** On a locked answer: how many reasons the withheld purity holds. */
+  deductionCount?: number;
 }
 
 export interface HistoryParams {
@@ -452,6 +462,41 @@ export interface GateVerifyParams {
   token: string;
   /** The visitor's address as your server saw it; sets ip_match. */
   remoteIp?: string;
+  /** The address the form submitted; adds an email check (one request). */
+  email?: string;
+}
+
+export type EmailStatus = 'valid' | 'invalid' | 'risky' | 'unknown';
+export type EmailReason =
+  | 'syntax' | 'no_mx' | 'null_mx' | 'disposable' | 'typo' | 'role' | 'dns_error' | 'quota' | (string & {});
+
+export interface EmailChecks {
+  syntax: boolean;
+  /** null when DNS was not asked or did not answer. */
+  mx: boolean | null;
+  disposable: boolean;
+  role: boolean;
+  freeProvider: boolean;
+}
+
+export interface EmailCheck {
+  email: string;
+  status: EmailStatus;
+  reason: EmailReason | null;
+  /** The address with a webmail typo fixed, e.g. jane@outlook.com for jane@outlok.com. */
+  suggestion: string | null;
+  domain: string;
+  checks: EmailChecks;
+  /** Always "not_checked": the mailbox itself is not probed. */
+  mailbox: string;
+}
+
+export interface GateEmail {
+  status: EmailStatus;
+  reason: EmailReason | null;
+  suggestion: string | null;
+  domain: string;
+  action: AgentAction;
 }
 
 export interface GateNetwork {
@@ -472,6 +517,8 @@ export interface GateVerifyResponse extends PremiumMarkers {
   hostname: string;
   issued_at: string;
   ip_match: boolean;
+  /** Present when email was sent. The top-level action is the stricter of the network's and this one's. */
+  email?: GateEmail;
 }
 
 export type PolicyAction = 'allow' | 'step_up' | 'block';

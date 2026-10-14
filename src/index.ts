@@ -18,6 +18,7 @@ export { AsnDirectory } from './resources/asn-directory';
 export { Bulk } from './resources/bulk';
 export { Crawlers } from './resources/crawlers';
 export { Edge } from './resources/edge';
+export { Email } from './resources/email';
 export { Gate } from './resources/gate';
 export { IP } from './resources/ip';
 export { Provenance } from './resources/provenance';
