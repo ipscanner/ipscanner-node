@@ -14,7 +14,7 @@ import type { RequestOptions } from './types';
 
 declare const process: { env?: Record<string, string | undefined> } | undefined;
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.3.1';
 export const DEFAULT_BASE_URL = 'https://ipscanner.io';
 export const DEFAULT_TIMEOUT = 30_000;
 export const DEFAULT_MAX_RETRIES = 2;

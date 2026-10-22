@@ -55,10 +55,10 @@ describe('email', () => {
     expect(p.deductionCount).toBe(3);
   });
 
-  it('identifies as 0.3.0', async () => {
+  it('identifies as 0.3.1', async () => {
     const { client, calls } = mockClient([json(200, { email: 'a@b.io', status: 'valid' })]);
     await client.email.check('a@b.io');
-    expect(VERSION).toBe('0.3.0');
-    expect(calls[0]!.headers.get('user-agent')).toBe('ipscanner-node/0.3.0');
+    expect(VERSION).toBe('0.3.1');
+    expect(calls[0]!.headers.get('user-agent')).toBe('ipscanner-node/0.3.1');
   });
 });
