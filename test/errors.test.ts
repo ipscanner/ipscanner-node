@@ -123,6 +123,15 @@ describe('errors', () => {
     expect(err.needed).toBeUndefined();
   });
 
+  it('never reads a negative Retry-After header', async () => {
+    const { client } = mockClient([
+      json(429, { error: 'rate_limit_exceeded', message: 'Too many requests' }, { 'Retry-After': '-30' }),
+    ]);
+    const err = (await client.ip.demo('1.1.1.1').catch((e: unknown) => e)) as RateLimitError;
+    expect(err.retryAfter).toBe(0);
+    expect(err.rateLimit.retryAfter).toBe(0);
+  });
+
   it('falls back to the upgrade url header', async () => {
     const { client } = mockClient([
       json(429, { error: 'rate_limit_exceeded', message: 'x' }, { 'X-Quota-Upgrade-Url': 'https://ipscanner.io/up' }),

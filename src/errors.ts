@@ -144,7 +144,7 @@ export function parseRateLimitHeaders(headers: Headers): RateLimitHeaders {
 function parseRetryAfter(value: string | undefined): number | undefined {
   if (value === undefined) return undefined;
   const seconds = num(value);
-  if (seconds !== undefined) return seconds;
+  if (seconds !== undefined) return Math.max(0, seconds);
   const date = Date.parse(value);
   if (Number.isNaN(date)) return undefined;
   return Math.max(0, Math.ceil((date - Date.now()) / 1000));
