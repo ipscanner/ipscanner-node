@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { IPScannerError } from '../src/index';
 import { json, mockClient } from './helpers';
 
 describe('resources', () => {
@@ -81,6 +82,20 @@ describe('resources', () => {
       'https://api.test/v1/asn/directory/15169',
       'https://api.test/v1/asn/directory/13335',
     ]);
+  });
+
+  it('rejects path parameters that would call another endpoint', async () => {
+    const { client, calls } = mockClient([json(200, {})]);
+    const attempts = [
+      client.ip.vpn('..'),
+      client.ip.geo('.'),
+      client.ip.whois(''),
+      client.sites.policy('..'),
+      client.asnDirectory.get('AS'),
+      client.ip.proxy('\uD800'),
+    ];
+    for (const attempt of attempts) await expect(attempt).rejects.toBeInstanceOf(IPScannerError);
+    expect(calls).toHaveLength(0);
   });
 
   it('routes every resource to the right endpoint', async () => {

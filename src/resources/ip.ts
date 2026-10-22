@@ -1,4 +1,5 @@
 import type { IPScanner } from '../client';
+import { pathParam } from '../path';
 import type {
   AsnResponse,
   GeolocationResponse,
@@ -20,24 +21,24 @@ export class IP {
     return this.client.request({ method: 'POST', path: '/v1/ip/lookup', body: { target }, options });
   }
 
-  vpn(ip: string, options?: RequestOptions): Promise<VpnResponse> {
-    return this.client.request({ method: 'GET', path: `/v1/vpn/${encodeURIComponent(ip)}`, options });
+  async vpn(ip: string, options?: RequestOptions): Promise<VpnResponse> {
+    return this.client.request({ method: 'GET', path: `/v1/vpn/${pathParam(ip)}`, options });
   }
 
-  proxy(ip: string, options?: RequestOptions): Promise<ProxyResponse> {
-    return this.client.request({ method: 'GET', path: `/v1/proxy/${encodeURIComponent(ip)}`, options });
+  async proxy(ip: string, options?: RequestOptions): Promise<ProxyResponse> {
+    return this.client.request({ method: 'GET', path: `/v1/proxy/${pathParam(ip)}`, options });
   }
 
-  geo(ip: string, options?: RequestOptions): Promise<GeolocationResponse> {
-    return this.client.request({ method: 'GET', path: `/v1/geo/${encodeURIComponent(ip)}`, options });
+  async geo(ip: string, options?: RequestOptions): Promise<GeolocationResponse> {
+    return this.client.request({ method: 'GET', path: `/v1/geo/${pathParam(ip)}`, options });
   }
 
-  asn(ip: string, options?: RequestOptions): Promise<AsnResponse> {
-    return this.client.request({ method: 'GET', path: `/v1/asn/${encodeURIComponent(ip)}`, options });
+  async asn(ip: string, options?: RequestOptions): Promise<AsnResponse> {
+    return this.client.request({ method: 'GET', path: `/v1/asn/${pathParam(ip)}`, options });
   }
 
-  whois(domain: string, options?: RequestOptions): Promise<WhoisResult> {
-    return this.client.request({ method: 'GET', path: `/v1/whois/${encodeURIComponent(domain)}`, options });
+  async whois(domain: string, options?: RequestOptions): Promise<WhoisResult> {
+    return this.client.request({ method: 'GET', path: `/v1/whois/${pathParam(domain)}`, options });
   }
 
   /** Recent lookups made with this account, newest first. */
@@ -51,8 +52,8 @@ export class IP {
   }
 
   /** Keyless demo lookup, rate limited per caller IP. */
-  demo(ip: string, options?: RequestOptions): Promise<LookupResult> {
-    return this.client.request({ method: 'GET', path: `/v1/demo/${encodeURIComponent(ip)}`, options });
+  async demo(ip: string, options?: RequestOptions): Promise<LookupResult> {
+    return this.client.request({ method: 'GET', path: `/v1/demo/${pathParam(ip)}`, options });
   }
 
   /** The caller's own public address, located. Keyless. */

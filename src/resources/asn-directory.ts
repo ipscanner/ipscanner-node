@@ -1,4 +1,5 @@
 import type { IPScanner } from '../client';
+import { pathParam } from '../path';
 import type {
   AsnDetail,
   AsnSearchParams,
@@ -32,8 +33,8 @@ export class AsnDirectory {
   }
 
   /** One autonomous system. Accepts 15169 or "AS15169". Keyless. */
-  get(asn: number | string, options?: RequestOptions): Promise<AsnDetail> {
+  async get(asn: number | string, options?: RequestOptions): Promise<AsnDetail> {
     const value = String(asn).trim().replace(/^as/i, '');
-    return this.client.request({ method: 'GET', path: `/v1/asn/directory/${encodeURIComponent(value)}`, options });
+    return this.client.request({ method: 'GET', path: `/v1/asn/directory/${pathParam(value)}`, options });
   }
 }
