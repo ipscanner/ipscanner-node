@@ -20,6 +20,9 @@ export const DEFAULT_TIMEOUT = 30_000;
 export const DEFAULT_MAX_RETRIES = 2;
 
 const RETRY_STATUSES = new Set([502, 503, 504]);
+const MAX_BACKOFF = 30_000;
+// setTimeout fires at once for delays above 2^31 - 1 ms.
+const MAX_TIMER_DELAY = 2_147_483_647;
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 
@@ -192,7 +195,7 @@ function startCall(timeout: number, userSignal: AbortSignal | undefined) {
   const timer = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, timeout);
+  }, Math.min(timeout, MAX_TIMER_DELAY));
   const onAbort = () => controller.abort(userSignal?.reason);
   if (userSignal) {
     if (userSignal.aborted) onAbort();
@@ -216,7 +219,7 @@ function startCall(timeout: number, userSignal: AbortSignal | undefined) {
 }
 
 function backoff(attempt: number): number {
-  return 500 * 2 ** attempt;
+  return Math.min(500 * 2 ** attempt, MAX_BACKOFF);
 }
 
 function sleep(ms: number, signal: AbortSignal | undefined): Promise<void> {

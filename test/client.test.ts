@@ -128,6 +128,43 @@ describe('client', () => {
     await expect(client.ip.lookup('1.1.1.1')).rejects.toBeInstanceOf(TimeoutError);
   });
 
+  it('waits for a slow answer when the timeout is beyond the timer limit', async () => {
+    const slow = (_: unknown, init: RequestInit) =>
+      new Promise<Response>((resolve, reject) => {
+        const timer = setTimeout(() => resolve(json(200, { ok: true })), 30);
+        init.signal?.addEventListener('abort', () => {
+          clearTimeout(timer);
+          reject(new DOMException('aborted', 'AbortError'));
+        });
+      });
+    for (const timeout of [Infinity, 2 ** 31]) {
+      const { client } = mockClient([slow], { timeout, maxRetries: 0 });
+      await expect(client.account.limits()).resolves.toEqual({ ok: true });
+    }
+  });
+
+  it('caps the backoff between retries', async () => {
+    vi.useFakeTimers();
+    const at: number[] = [];
+    const { client } = mockClient(
+      [
+        () => {
+          at.push(Date.now());
+          return json(503, { error: 'server_error', message: 'down' });
+        },
+      ],
+      { maxRetries: 40 },
+    );
+    const assertion = expect(client.provenance.verify()).rejects.toMatchObject({ status: 503 });
+    await vi.runAllTimersAsync();
+    await assertion;
+    const waits = at.slice(1).map((t, i) => t - at[i]!);
+    expect(waits).toHaveLength(40);
+    expect(waits.slice(0, 3)).toEqual([500, 1000, 2000]);
+    expect(Math.max(...waits)).toBe(30_000);
+    expect(Math.min(...waits)).toBe(500);
+  });
+
   it('passes a caller abort through without retrying', async () => {
     const controller = new AbortController();
     const { client, calls } = mockClient([
