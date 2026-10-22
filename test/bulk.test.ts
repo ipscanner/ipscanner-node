@@ -109,6 +109,13 @@ describe('bulk.stream', () => {
     await expect(collect(client.bulk.stream({ ips: ['1.1.1.1'] }))).rejects.toBeInstanceOf(IPScannerError);
   });
 
+  it('throws on a line that is not a JSON object', async () => {
+    for (const line of ['null', '[]', '"done"', '1']) {
+      const { client } = mockClient([ndjson(['{"type":"meta"}\n', `${line}\n`])]);
+      await expect(collect(client.bulk.stream({ ips: ['1.1.1.1'] }))).rejects.toBeInstanceOf(IPScannerError);
+    }
+  });
+
   it('stops reading when the consumer breaks early', async () => {
     let cancelled = false;
     const encoder = new TextEncoder();

@@ -72,12 +72,7 @@ async function* readLines(response: Response): AsyncGenerator<string, void, unde
 
 /** Parse one NDJSON line from the bulk stream, filling omitted fields with their zero values. */
 export function toBulkEvent(line: string): BulkEvent {
-  let raw: Record<string, unknown>;
-  try {
-    raw = JSON.parse(line) as Record<string, unknown>;
-  } catch (cause) {
-    throw new IPScannerError(`Could not parse bulk stream line: ${line.slice(0, 200)}`, { cause });
-  }
+  const raw = parseEventLine(line);
   const s = (key: string) => (typeof raw[key] === 'string' ? (raw[key] as string) : '');
   const n = (key: string) => (typeof raw[key] === 'number' ? (raw[key] as number) : 0);
   const b = (key: string) => raw[key] === true;
@@ -114,4 +109,17 @@ export function toBulkEvent(line: string): BulkEvent {
     event.complete = event.reason === 'complete' && event.processed + event.failed >= event.total;
   }
   return event;
+}
+
+function parseEventLine(line: string): Record<string, unknown> {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(line);
+  } catch (cause) {
+    throw new IPScannerError(`Could not parse bulk stream line: ${line.slice(0, 200)}`, { cause });
+  }
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    throw new IPScannerError(`Bulk stream line is not a JSON object: ${line.slice(0, 200)}`);
+  }
+  return raw as Record<string, unknown>;
 }
